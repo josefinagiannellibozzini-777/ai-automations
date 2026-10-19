@@ -111,5 +111,5 @@ flowchart LR
 
 ## Author
 
-**Your Name**: AI Automation
-[LinkedIn](https://linkedin.com/in/your-profile) · [Portfolio](https://your-portfolio.com)
+**Josefina Giannelli Bozzini**: AI Automation
+[LinkedIn](www.linkedin.com/in/josefina-giannelli-bozzini) 
