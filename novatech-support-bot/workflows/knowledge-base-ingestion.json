@@ -1,0 +1,306 @@
+{
+  "name": "NovaTech Support Bot - Manual Indexing",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFile",
+        "fileToWatch": {
+          "__rl": true,
+          "value": "1Yn6VKkmyjIFroapW2sdmpzkCT3bnMdSq",
+          "mode": "list",
+          "cachedResultName": "novatech-manual-2026.pdf",
+          "cachedResultUrl": "https://drive.google.com/file/d/1Yn6VKkmyjIFroapW2sdmpzkCT3bnMdSq/view?usp=drivesdk"
+        }
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "00611f7b-186d-4a5b-9867-1c773bfa94af",
+      "name": "Watch Manual in Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "pYy5jsplJUroiWuA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1Yn6VKkmyjIFroapW2sdmpzkCT3bnMdSq",
+          "mode": "list",
+          "cachedResultName": "novatech-manual-2026.pdf",
+          "cachedResultUrl": "https://drive.google.com/file/d/1Yn6VKkmyjIFroapW2sdmpzkCT3bnMdSq/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "e391a1e0-8b03-4ed0-a6c2-e6f07cd20a5f",
+      "name": "Download Manual PDF",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "pYy5jsplJUroiWuA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "loader": "pdfLoader",
+        "textSplittingMode": "custom",
+        "options": {
+          "splitPages": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        144
+      ],
+      "id": "d1151fbe-22b9-48de-9ba5-48b132292440",
+      "name": "Load PDF Pages"
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        608,
+        336
+      ],
+      "id": "2a69e66f-28b3-43d4-b43d-94fcae5febc0",
+      "name": "Split into Chunks"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        192
+      ],
+      "id": "b7d13bb9-11f0-4868-9528-d2c7e68c4639",
+      "name": "Generate Embeddings",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "novatech-manual-openai",
+          "mode": "list",
+          "cachedResultName": "novatech-manual-openai"
+        },
+        "options": {
+          "clearNamespace": true,
+          "pineconeNamespace": "novatech-manual"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "6c35dde2-a61b-42d1-9e59-b3605637a554",
+      "name": "Store in Pinecone",
+      "credentials": {
+        "pineconeApi": {
+          "id": "qMktEtAPR1481DCe",
+          "name": "Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Trigger\nDetects updates to the NovaTech manual (PDF) in Google Drive.",
+        "height": 112,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -192,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "33cfb8ed-4d18-4da1-94ba-0a3b9cd8d5fa",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Download\nDownloads the PDF as binary data.",
+        "height": 96,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        144,
+        -64
+      ],
+      "typeVersion": 1,
+      "id": "ab02957c-fe57-4ac8-8777-e2f50fee0694",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Document loader\nExtracts the text from the PDF, page by page.",
+        "height": 112,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        832,
+        80
+      ],
+      "typeVersion": 1,
+      "id": "b7460052-702c-459a-aad2-f991ac668182",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Chunking\nSplits the text into overlapping chunks for better retrieval.",
+        "height": 96,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        688,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "33a90565-0db7-42e8-bbee-e10e2f03caa4",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Embeddings\nConverts each chunk into a vector.",
+        "height": 96,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        192,
+        176
+      ],
+      "typeVersion": 1,
+      "id": "833f2647-e39c-45f5-bb51-2244e10bf248",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## Vector store\nClears the namespace and stores the new vectors in Pinecone, so the index always matches the latest manual.",
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        448,
+        -128
+      ],
+      "typeVersion": 1,
+      "id": "8d2e38b1-6a4e-42a6-a8d1-d8213d33f140",
+      "name": "Sticky Note5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Watch Manual in Drive": {
+      "main": [
+        [
+          {
+            "node": "Download Manual PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Manual PDF": {
+      "main": [
+        [
+          {
+            "node": "Store in Pinecone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load PDF Pages": {
+      "ai_document": [
+        [
+          {
+            "node": "Store in Pinecone",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split into Chunks": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Load PDF Pages",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Store in Pinecone",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5d265b13-1573-4613-b0d0-bf0e7eb23fb2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "60db09d345a03a40e72db6b9898fe784b95730fa20f011ee37e0cd0f1fdc6f40"
+  },
+  "nodeGroups": [],
+  "id": "eJ6IfJQNKxYq3vII",
+  "tags": []
+}
