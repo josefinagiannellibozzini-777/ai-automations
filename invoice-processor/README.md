@@ -4,8 +4,9 @@ An n8n workflow that reads supplier invoices from email, extracts their data wit
 
 Built for **Chías**, a coffee shop that receives invoices from its dairy, coffee and bakery suppliers every week.
 
-<!-- Demo GIF: add images/demo.gif and uncomment the line below -->
-<!-- ![Demo](images/demo.gif) -->
+## Demo
+
+▶️ [Watch the demo] https://drive.google.com/file/d/1IOQQ0MzZX_7V80Tt006WJBNkQL6tgDBo/view?usp=sharing
 
 ## The problem
 
