@@ -1,0 +1,83 @@
+{
+  "name": "Error Handler - Invoice Processor",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4d586bae-961f-4fbc-92bb-a825ccb1f566",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "content": "## Error Handler\nCatches any unexpected failure in the Supplier Invoice Processor (e.g. unreadable PDF, API outage) and sends an email with the failed node, the error message and a link to the execution.",
+        "height": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        48,
+        -208
+      ],
+      "typeVersion": 1,
+      "id": "b489205c-3ea0-49c6-b57b-c42443eaeecd",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "sendTo": "your-email@example.com",
+        "subject": "=Workflow error: {{ $json.workflow.name }}",
+        "emailType": "text",
+        "message": "=The workflow \"{{ $json.workflow.name }}\" failed and the invoice was not processed.  \nFailed node: {{ $json.execution.lastNodeExecuted }} \nError: {{ $json.execution.error.message }} \nExecution ID: {{ $json.execution.id }} \nExecution link: {{ $json.execution.url }}  \nPlease check the original email and process the invoice manually if needed.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "911d0121-25e6-4e37-a096-8fdca5a53abd",
+      "name": "Alert - Workflow Error",
+      "webhookId": "046d89fb-90c6-4f96-991b-527222626efb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PgXQDEdR9NMKdJqp",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Alert - Workflow Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "646e0bb0-e8bb-4ab9-b608-9b0c5c222022",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a57817ef576085de2ee3673fe3a373974e8d7287b1f8e6c9868998c1faf975c1"
+  },
+  "nodeGroups": [],
+  "id": "qq0OzXzolDucxqBO",
+  "tags": []
+}
