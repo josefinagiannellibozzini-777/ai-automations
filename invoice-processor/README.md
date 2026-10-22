@@ -1,4 +1,4 @@
-🧾 AI Supplier Invoice Processor
+#🧾 AI Supplier Invoice Processor
 
 An n8n workflow that reads supplier invoices from email, extracts their data with AI, validates it, and loads it into Google Sheets automatically. Invoices with errors or duplicates are flagged for human review.
 
