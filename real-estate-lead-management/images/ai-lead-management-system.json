@@ -1,0 +1,1030 @@
+{
+  "name": "AI Lead Management System",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "real-estate-lead",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "59be46aa-1a6e-4cc4-85b4-b82f58bd8a94",
+      "name": "Tally — New Lead Submission",
+      "webhookId": "bfd5a943-03c5-4a5c-b0bd-dfc0ef13ad3f"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get the list of answers sent by Tally\nconst fields = $input.first().json.body.data.fields;\n\n// 2. Create an empty object for the clean data\nconst result = {};\n\n// 3. Loop through every field\nfor (const field of fields) {\n  let value = field.value;\n\n  // 4. If the question has options, replace the ID with the option text\n  if (field.options && Array.isArray(field.value)) {\n    const selected = field.options\n      .filter(option => field.value.includes(option.id))\n      .map(option => option.text);\n\n    value = selected[0]; // single choice\n  }\n\n  // 5. Use the question title as the key\n  result[field.label] = value;\n}\n\n// 6. Return only the clean object\nreturn [{ json: result }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "1368944f-f868-4670-b23f-04804374a556",
+      "name": "Normalize Lead Data"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appJTuaJZcQ29NBIR",
+          "mode": "list",
+          "cachedResultName": "Real Estate CRM",
+          "cachedResultUrl": "https://airtable.com/appJTuaJZcQ29NBIR"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblMAfek1nZGNL85O",
+          "mode": "list",
+          "cachedResultName": "Leads - Real Estate",
+          "cachedResultUrl": "https://airtable.com/appJTuaJZcQ29NBIR/tblMAfek1nZGNL85O"
+        },
+        "filterByFormula": "={Email} = '{{ $json[\"Work Email\"] }}'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "7fb59648-0220-44f0-b2ef-3a44a2fe28fc",
+      "name": "Search records",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "UfVhfgOYT3ngBNHY",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f6770c9e-02db-48ec-a708-c4e29ca6b9a3",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        0
+      ],
+      "id": "d1dea995-d939-42e5-9517-f46938982131",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appJTuaJZcQ29NBIR",
+          "mode": "list",
+          "cachedResultName": "Real Estate CRM",
+          "cachedResultUrl": "https://airtable.com/appJTuaJZcQ29NBIR"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblMAfek1nZGNL85O",
+          "mode": "list",
+          "cachedResultName": "Leads - Real Estate",
+          "cachedResultUrl": "https://airtable.com/appJTuaJZcQ29NBIR/tblMAfek1nZGNL85O"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "Lead Name": "={{ $('Normalize Lead Data').item.json[\"Full Name\"] }}",
+            "Email": "={{ $('Normalize Lead Data').item.json[\"Work Email\"] }}",
+            "Inquiry Type": "={{ $('Normalize Lead Data').item.json[\"Inquiry Type\"] }}",
+            "Preferred Location": "={{ $('Normalize Lead Data').item.json[\"Preferred Location\"] }}",
+            "Property Requirements": "={{ $('Normalize Lead Data').item.json[\"Property Requirements\"] }}",
+            "Expected Timeline": "={{ $('Normalize Lead Data').item.json[\"Expected Timeline\"] }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Name",
+              "displayName": "Lead Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Inquiry Type",
+              "displayName": "Inquiry Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Preferred Location",
+              "displayName": "Preferred Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Property Requirements",
+              "displayName": "Property Requirements",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Expected Timeline",
+              "displayName": "Expected Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Intent",
+              "displayName": "Intent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Summary",
+              "displayName": "AI Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Next Action",
+              "displayName": "Next Action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Approval Status",
+              "displayName": "Approval Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        -96
+      ],
+      "id": "b0765811-fffe-4eb5-8ed0-162f342c6db5",
+      "name": "Update Existing Lead",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "UfVhfgOYT3ngBNHY",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appJTuaJZcQ29NBIR",
+          "mode": "list",
+          "cachedResultName": "Real Estate CRM",
+          "cachedResultUrl": "https://airtable.com/appJTuaJZcQ29NBIR"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblMAfek1nZGNL85O",
+          "mode": "list",
+          "cachedResultName": "Leads - Real Estate",
+          "cachedResultUrl": "https://airtable.com/appJTuaJZcQ29NBIR/tblMAfek1nZGNL85O"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Lead Name": "={{ $('Normalize Lead Data').item.json[\"Full Name\"] }}",
+            "Email": "={{ $('Normalize Lead Data').item.json[\"Work Email\"] }}",
+            "Inquiry Type": "={{ $('Normalize Lead Data').item.json[\"Inquiry Type\"] }}",
+            "Preferred Location": "={{ $('Normalize Lead Data').item.json[\"Preferred Location\"] }}",
+            "Property Requirements": "={{ $('Normalize Lead Data').item.json[\"Property Requirements\"] }}",
+            "Expected Timeline": "={{ $('Normalize Lead Data').item.json[\"Expected Timeline\"] }}",
+            "Status": "New",
+            "Approval Status": "Pending"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Lead Name",
+              "displayName": "Lead Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Inquiry Type",
+              "displayName": "Inquiry Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Preferred Location",
+              "displayName": "Preferred Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Property Requirements",
+              "displayName": "Property Requirements",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Expected Timeline",
+              "displayName": "Expected Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Intent",
+              "displayName": "Intent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Summary",
+              "displayName": "AI Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Next Action",
+              "displayName": "Next Action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Approval Status",
+              "displayName": "Approval Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        912,
+        96
+      ],
+      "id": "9cbdae68-b648-4fc2-9f16-a03ef5844d36",
+      "name": "Create New Lead",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "UfVhfgOYT3ngBNHY",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Please analyze the information for this lead:\n- Name: {{ $('Normalize Lead Data').item.json[\"Full Name\"] }}\n- Email: {{ $('Normalize Lead Data').item.json[\"Work Email\"] }}\n- Inquiry Type: {{ $('Normalize Lead Data').item.json[\"Inquiry Type\"] }}\n- Location: {{ $('Normalize Lead Data').item.json[\"Preferred Location\"] }}\n- Requirements: {{ $('Normalize Lead Data').item.json[\"Property Requirements\"] }}\n- Timeline: {{ $('Normalize Lead Data').item.json[\"Expected Timeline\"] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an AI assistant for a real estate agency. Your job is to analyze incoming leads and help the sales team prioritize them.\n\nFor each lead, determine:\n\n1. Intent: classify the lead's main purpose as Buying, Renting, Selling, Property Valuation, Real Estate Investment, or Other.\n2. Priority: classify the lead as Urgent, High, Medium, or Low.\n3. AI Summary: summarize the lead's needs in one or two sentences.\n4. Next Action: recommend one specific next step for the sales team.\n\nPriority guidelines:\n- Urgent: the lead wants to act immediately or has an ASAP timeline.\n- High: the lead has a clear goal and plans to act within one month.\n- Medium: the lead plans to act within three months.\n- Low: the lead is just exploring or has no clear timeline.\n\nRules:\n- Base your analysis only on the information provided.\n- Never invent a budget, location, property details, or other missing information.\n- If information is missing, acknowledge it instead of making assumptions.\n- Keep the summary and recommended action concise.\n- Return all four fields: Intent, Priority, AI Summary, and Next Action."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1392,
+        0
+      ],
+      "id": "89e52f32-5341-44e5-a87f-0d8779970c3a",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1392,
+        176
+      ],
+      "id": "a192305a-abbd-4641-8609-f9ad38780f32",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"Intent\": \"Buying\",\n  \"Priority\": \"Urgent\",\n  \"AI Summary\": \"The client wants to buy a house in New York City as soon as possible.\",\n  \"Next Action\": \"Ask about the budget and send available properties.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1536,
+        176
+      ],
+      "id": "2c0a8d52-5dc9-4b70-98af-221ea467d34f",
+      "name": "Structure AI Lead Analysis"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appJTuaJZcQ29NBIR",
+          "mode": "list",
+          "cachedResultName": "Real Estate CRM",
+          "cachedResultUrl": "https://airtable.com/appJTuaJZcQ29NBIR"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblMAfek1nZGNL85O",
+          "mode": "list",
+          "cachedResultName": "Leads - Real Estate",
+          "cachedResultUrl": "https://airtable.com/appJTuaJZcQ29NBIR/tblMAfek1nZGNL85O"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Create New Lead').isExecuted ? $('Create New Lead').item.json.id : $('Update Existing Lead').item.json.id }}",
+            "Intent": "={{ $json.output.Intent }}",
+            "Priority": "={{ $json.output.Priority }}",
+            "AI Summary": "={{ $json.output[\"AI Summary\"] }}",
+            "Next Action": "={{ $json.output[\"Next Action\"] }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Name",
+              "displayName": "Lead Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Inquiry Type",
+              "displayName": "Inquiry Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Preferred Location",
+              "displayName": "Preferred Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Property Requirements",
+              "displayName": "Property Requirements",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Expected Timeline",
+              "displayName": "Expected Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Intent",
+              "displayName": "Intent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Summary",
+              "displayName": "AI Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Next Action",
+              "displayName": "Next Action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Approval Status",
+              "displayName": "Approval Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        0
+      ],
+      "id": "e5028fdf-0ebc-43ee-80a1-799cf72d71e6",
+      "name": "Update AI Lead Analysis",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "UfVhfgOYT3ngBNHY",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Q27lXxkAB65ux6bU",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Q27lXxkAB65ux6bU",
+          "cachedResultName": "Human Approval"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [
+            ""
+          ],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        1984,
+        0
+      ],
+      "id": "968aac2d-4067-499a-ab08-c6929c2e47e7",
+      "name": "Call 'Human Approval'"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "df158a0b-c124-4f8b-a9d2-591213c65796",
+              "leftValue": "={{ $json.fields[\"Lead Name\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "ec5deb72-375b-4b61-b52c-9ee947a79791",
+              "leftValue": "={{ $json.fields.Email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "5e0b885c-a8d2-4f45-b39d-ae4a05333870",
+              "leftValue": "={{ $json.fields[\"Inquiry Type\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "ef71a58e-f5f3-4300-95ad-67b236ea3d01",
+              "leftValue": "={{ $json.fields[\"Preferred Location\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "730ca9d9-34bb-4484-8c37-63b8d973206d",
+              "leftValue": "={{ $json.fields[\"Property Requirements\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "4aad6371-de76-4337-bac7-6eb3f60d2293",
+              "leftValue": "={{ $json.fields[\"Expected Timeline\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1136,
+        16
+      ],
+      "id": "dd667543-4c0b-4e91-a007-80bcf9e6005b",
+      "name": "Validate Lead Data"
+    },
+    {
+      "parameters": {
+        "sendTo": "your-email@example.com",
+        "subject": "⚠️ Incomplete Lead — Review Required",
+        "emailType": "text",
+        "message": "A lead was received with missing required information.  \nThe lead failed data validation and will not proceed to AI analysis.  \nPlease review the record in Airtable and complete the missing information before processing it.  \nWorkflow: Lead Management Validation node: Validate Lead Data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1152,
+        176
+      ],
+      "id": "4650dec7-2036-4a15-9cd2-75138598b2ad",
+      "name": "Send Incomplete Lead Alert",
+      "webhookId": "110ff531-d8f7-47a9-9fcd-145aae6154df",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "KYoiptszI3W3gmr4",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Tally — New Lead Submission": {
+      "main": [
+        [
+          {
+            "node": "Normalize Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Update Existing Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create New Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Existing Lead": {
+      "main": [
+        [
+          {
+            "node": "Validate Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create New Lead": {
+      "main": [
+        [
+          {
+            "node": "Validate Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure AI Lead Analysis": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Update AI Lead Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update AI Lead Analysis": {
+      "main": [
+        [
+          {
+            "node": "Call 'Human Approval'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Lead Data": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Incomplete Lead Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "DzygtO3F4wnOjhW4",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "9d541a9c-cbf0-47ba-a236-cab3b212733b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "60db09d345a03a40e72db6b9898fe784b95730fa20f011ee37e0cd0f1fdc6f40"
+  },
+  "nodeGroups": [],
+  "id": "4Iy6Y9GrKTVlJaGm",
+  "tags": []
+}
