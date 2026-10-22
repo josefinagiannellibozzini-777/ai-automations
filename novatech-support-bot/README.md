@@ -4,7 +4,7 @@ An AI support assistant for a fictional EdTech academy (**NovaTech Academy**), b
 
 ## Demo
 
-▶️ [Watch the demo video] https://drive.google.com/file/d/1gkS2p6xFPWSmxLQGtFBbCK8KC4B-tYZt/view?usp=sharing)
+▶️ [Watch the demo video] https://drive.google.com/file/d/1gkS2p6xFPWSmxLQGtFBbCK8KC4B-tYZt/view?usp=sharing
 
 The project is made of two workflows:
 
