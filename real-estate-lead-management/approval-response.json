@@ -1,0 +1,323 @@
+{
+  "name": "Approval Response",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "approval-response",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e6e6e4ba-921a-48c8-a069-55e1d94c3864",
+      "name": "Webhook",
+      "webhookId": "0cca9eae-98ec-4739-8d92-e6d68cb0f368"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appJTuaJZcQ29NBIR",
+          "mode": "list",
+          "cachedResultName": "Real Estate CRM",
+          "cachedResultUrl": "https://airtable.com/appJTuaJZcQ29NBIR"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblMAfek1nZGNL85O",
+          "mode": "list",
+          "cachedResultName": "Leads - Real Estate",
+          "cachedResultUrl": "https://airtable.com/appJTuaJZcQ29NBIR/tblMAfek1nZGNL85O"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.query.id }}",
+            "Approval Status": "={{ $json.query.decision === 'approve' ? 'Approved' : 'Rejected' }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Name",
+              "displayName": "Lead Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Inquiry Type",
+              "displayName": "Inquiry Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Preferred Location",
+              "displayName": "Preferred Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Property Requirements",
+              "displayName": "Property Requirements",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Expected Timeline",
+              "displayName": "Expected Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Intent",
+              "displayName": "Intent",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Summary",
+              "displayName": "AI Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Next Action",
+              "displayName": "Next Action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Approval Status",
+              "displayName": "Approval Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "1253e4a8-7fe4-49b9-ac59-97fbd7d6765e",
+      "name": "Update Lead Approval Status",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "UfVhfgOYT3ngBNHY",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "557298f3-c9cf-4bf8-826b-484c0c1cd886",
+              "leftValue": "={{ $json.fields[\"Approval Status\"] }}",
+              "rightValue": "Approved",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "afdc4c99-eb06-48e1-b433-2fe8da3e92fc",
+      "name": "Was Lead Approved?"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Update Lead Approval Status').item.json.fields.Email }}",
+        "subject": "Thank You for Your Real Estate Inquiry",
+        "emailType": "text",
+        "message": "=Hi {{ $('Update Lead Approval Status').item.json.fields[\"Lead Name\"] }}, \nThank you for reaching out about your real estate search in {{ $('Update Lead Approval Status').item.json.fields[\"Preferred Location\"] }}. \nWe'd be happy to learn more about your needs and help you explore suitable properties.  \nCould you share your budget and any must-have features you're looking for? We can also arrange a brief call at a time that works for you.  \nBest regards, Real Estate Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        -16
+      ],
+      "id": "47578502-6782-4aed-b85d-a72b04d6ef6c",
+      "name": "Send Approved Lead Email",
+      "webhookId": "4c0e0ed0-866f-4ce0-be52-291a310d5426",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "KYoiptszI3W3gmr4",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Update Lead Approval Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead Approval Status": {
+      "main": [
+        [
+          {
+            "node": "Was Lead Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Was Lead Approved?": {
+      "main": [
+        [
+          {
+            "node": "Send Approved Lead Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "DzygtO3F4wnOjhW4",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "915d6fee-6d22-44e3-a182-5827c436cc1a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "60db09d345a03a40e72db6b9898fe784b95730fa20f011ee37e0cd0f1fdc6f40"
+  },
+  "nodeGroups": [],
+  "id": "jz7hZoHp4vwVOzwW",
+  "tags": []
+}

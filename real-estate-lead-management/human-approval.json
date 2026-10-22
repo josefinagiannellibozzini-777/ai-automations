@@ -1,0 +1,151 @@
+{
+  "name": "Human Approval",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d6352660-8997-4141-8094-86c4467d7fc0",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7ebc97ee-2167-474a-974e-2eef7d639d2a",
+              "name": "Lead Name",
+              "value": "={{ $json.fields[\"Lead Name\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "b8002026-54b1-47ac-b879-4b2fcbd7e82f",
+              "name": "Email",
+              "value": "={{ $json.fields.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "91a4b569-6469-4ec5-904b-4c3cbd59941a",
+              "name": "Intent",
+              "value": "={{ $json.fields.Intent }}",
+              "type": "string"
+            },
+            {
+              "id": "9c783def-4697-4c20-9308-82577ef3b777",
+              "name": "Priority",
+              "value": "={{ $json.fields.Priority }}",
+              "type": "string"
+            },
+            {
+              "id": "d3931443-bacc-4882-80d6-04ac35b28e39",
+              "name": "AI Summary",
+              "value": "={{ $json.fields[\"AI Summary\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "3ba0bcc7-2daa-494b-a5c0-41f15fc15eda",
+              "name": "Next Action",
+              "value": "={{ $json.fields[\"Next Action\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "59a084af-8828-496b-b238-20116952f3ea",
+              "name": "Approval Status",
+              "value": "={{ $json.fields[\"Approval Status\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "361da705-d5e5-4556-8edf-8a3e0e365df4",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "fb859cc6-4036-4d87-8d1d-ba8c803c1caf",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "sendTo": "your-email@example.com",
+        "subject": "=Approval Required — {{ $json[\"Lead Name\"] }} — {{ $json.Priority }} Priority",
+        "emailType": "text",
+        "message": "=LEAD PENDING APPROVAL\n\nA new real estate lead requires your review before we contact them.\n\nLEAD INFORMATION\n\nName: {{ $json[\"Lead Name\"] }}\nEmail: {{ $json.Email }}\nIntent: {{ $json.Intent }}\nPriority: {{ $json.Priority }}\nCurrent Status: {{ $json[\"Approval Status\"] }}\n\nAI SUMMARY\n\n{{ $json[\"AI Summary\"] }}\n\nPROPOSED NEXT ACTION\n\n{{ $json[\"Next Action\"] }}\n\nAIRTABLE RECORD ID: {{ $json.id }}\n\nPlease review the information before authorizing contact with this lead.\n\nAPPROVE THIS LEAD\nhttps://YOUR-N8N-INSTANCE.app.n8n.cloud/webhook/approval-response?decision=approve&id={{ $json.id }}\n\nREJECT THIS LEAD\nhttps://YOUR-N8N-INSTANCE.app.n8n.cloud/webhook/approval-response?decision=reject&id={{ $json.id }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "8abf36e7-8498-420e-99db-27f63e4104ea",
+      "name": "Send Lead Approval Email",
+      "webhookId": "f5b24d32-ab12-4d86-8d8d-5e1b549707ac",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "KYoiptszI3W3gmr4",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send Lead Approval Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "DzygtO3F4wnOjhW4",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "7d3d5fdc-7798-446f-82f0-10471adf363d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "60db09d345a03a40e72db6b9898fe784b95730fa20f011ee37e0cd0f1fdc6f40"
+  },
+  "nodeGroups": [],
+  "id": "Q27lXxkAB65ux6bU",
+  "tags": []
+}
