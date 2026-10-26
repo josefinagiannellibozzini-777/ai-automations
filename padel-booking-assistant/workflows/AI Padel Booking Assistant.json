@@ -1,0 +1,381 @@
+{
+  "name": "AI Padel Booking Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "id": "125340f6-2aae-46fa-bcfd-d94d91520dbc",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "d4c3e16e-be22-42b1-9afb-fde5ce29246e",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "icvyBv9cJOIubX5l",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer message:\n\n{{ $json.message }}\n\nCustomer name:\n\n{{ $json.name }}\n\nBased on the customer's message, understand what the customer wants and handle the request using the available tools. Then provide the appropriate response to the customer.\n",
+        "options": {
+          "systemMessage": "=You are a WhatsApp booking assistant for a padel court.\n\nYour job is to understand the customer's messages and help them check and book available court time slots using the available Google Sheets tools.\n\nRules:\n\n* Be friendly, concise, and natural.\n* Respond in Spanish.\n* Never invent availability, dates, times, bookings, or customer information.\n* Use the Google Sheets tools whenever you need to check or update court availability.\n* If the customer wants to make a reservation, first check whether the requested slot is available.\n* Only book a slot after confirming that it is available.\n* If the requested slot is not available, do not book it. Tell the customer that it is occupied and offer another available slot if the tools provide one.\n* If important information is missing, ask the customer for it.\n* Do not expose internal tools, workflows, or technical details to the customer.\n\nBooking information:\n\n* The court costs 20 USD per hour.\n* The address is Alte. Brown 77.\n* Only provide the price or address if the customer asks.\n* Do not invent or provide any other business information.\n\nWhen one or more bookings are successfully made, always confirm every booking to the customer, including the day and time of each reserved slot.\n\nCurrent date: {{ $now.format('yyyy-MM-dd') }}\nCurrent day of the week: {{ $now.format('EEEE') }}\n\nDate rules:\n* Use the current date and day above as the reference.\n* If the customer says \"today\", \"tomorrow\", \"Monday\", etc., interpret it relative to the current date.\n* Never invent or assume a date.\n* If the customer gives a day of the week, make sure it matches the actual calendar before confirming the booking.\n* When confirming a booking, state the day and time that correspond to the requested slot."
+        }
+      },
+      "id": "5aeb5970-2b42-4214-ac24-2042147e1503",
+      "name": "Padel Booking Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
+        "contextWindowLength": 10
+      },
+      "id": "9a4c2dc3-0579-497d-bd1b-194646e0ca74",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        432,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17Eonu0RJ0DA73S7_m_k6s_bn79GUWyT4KwptnXlN-dY",
+          "mode": "list",
+          "cachedResultName": "Padel Court Bookings",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17Eonu0RJ0DA73S7_m_k6s_bn79GUWyT4KwptnXlN-dY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 91187000,
+          "mode": "list",
+          "cachedResultName": "slots",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17Eonu0RJ0DA73S7_m_k6s_bn79GUWyT4KwptnXlN-dY/edit#gid=91187000"
+        },
+        "options": {}
+      },
+      "id": "90161175-7171-469c-97b0-005cc95de75a",
+      "name": "Check Slot Availability",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        560,
+        224
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "qgyvZz7p5Bv6KnoC",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "17Eonu0RJ0DA73S7_m_k6s_bn79GUWyT4KwptnXlN-dY",
+          "mode": "list",
+          "cachedResultName": "Padel Court Bookings",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17Eonu0RJ0DA73S7_m_k6s_bn79GUWyT4KwptnXlN-dY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 91187000,
+          "mode": "list",
+          "cachedResultName": "slots",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17Eonu0RJ0DA73S7_m_k6s_bn79GUWyT4KwptnXlN-dY/edit#gid=91187000"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "slot_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('slot_id__using_to_match_', ``, 'string') }}",
+            "status": "Booked",
+            "booked_by": "={{ $('Prepare WhatsApp Data').first().json.name }}"
+          },
+          "matchingColumns": [
+            "slot_id"
+          ],
+          "schema": [
+            {
+              "id": "slot_id",
+              "displayName": "slot_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "day",
+              "displayName": "day",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "time",
+              "displayName": "time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "booked_by",
+              "displayName": "booked_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "27595c79-4512-4c2c-8a5a-c071a282ebfc",
+      "name": "Book Slot",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        224
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "qgyvZz7p5Bv6KnoC",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6422744a-8caf-4732-bbd6-9729b3ed1814",
+              "name": "name",
+              "value": "={{ $('WhatsApp Trigger').item.json.contacts[0].profile.name }}",
+              "type": "string"
+            },
+            {
+              "id": "61d567fd-ae1f-43da-8356-482942013698",
+              "name": "chat_id",
+              "value": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
+              "type": "string"
+            },
+            {
+              "id": "798191a3-fdd6-4ac2-8618-291c949805bf",
+              "name": "message",
+              "value": "={{ $('WhatsApp Trigger').item.json.messages[0].text.body }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "35c4dffd-bbd4-41ea-81a9-9e00370ed08d",
+      "name": "Prepare WhatsApp Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "=1313440675195744",
+        "recipientPhoneNumber": "={{ $('Prepare WhatsApp Data').first().json.chat_id.replace(/^549/, '54') }}",
+        "textBody": "={{ $('Padel Booking Agent').first().json.output }}",
+        "additionalFields": {}
+      },
+      "id": "efe6e414-cbf4-4306-97f8-5c982cd74b25",
+      "name": "Send WhatsApp Message",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        816,
+        0
+      ],
+      "webhookId": "10db4267-6f6b-45c8-9986-63b28e40cc35",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "FJNHd5cq4IyNglme",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        304,
+        224
+      ],
+      "id": "b0796234-0f8c-4de5-b6eb-2b54fbd82561",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare WhatsApp Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Padel Booking Agent": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Padel Booking Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Slot Availability": {
+      "ai_tool": [
+        [
+          {
+            "node": "Padel Booking Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Book Slot": {
+      "ai_tool": [
+        [
+          {
+            "node": "Padel Booking Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare WhatsApp Data": {
+      "main": [
+        [
+          {
+            "node": "Padel Booking Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Padel Booking Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6e6da120-cd61-4cde-8c75-c42e1fc4cbc7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a57817ef576085de2ee3673fe3a373974e8d7287b1f8e6c9868998c1faf975c1"
+  },
+  "nodeGroups": [],
+  "id": "PiM8izvPTbP82U9x",
+  "tags": []
+}
