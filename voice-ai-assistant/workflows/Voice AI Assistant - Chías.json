@@ -1,0 +1,417 @@
+{
+  "name": "Voice AI Assistant - Chías",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 120
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        224
+      ],
+      "id": "d1508884-3233-47e2-815e-616ddd21814e",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Compliance and binary data disposal\nThe customer's audio exists only in the execution's memory (binary \"data\").\n- No Drive, database, or storage nodes.\n- Settings: saving of successful, failed, and manual executions is disabled.\n- The agent's memory stores text only, in RAM, never audio.\nWhen the execution ends, the binary data is discarded.",
+        "height": 400,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1296,
+        160
+      ],
+      "typeVersion": 1,
+      "id": "5fbf200e-19b8-4835-8540-79e0289a43ff",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Fallback route\nMessage without audio (e.g. text): exits through Download audio's error output.\nCorrupted audio: exits through Whisper's error output.\nEmpty transcription: exits through the IF's false branch.\nIn all cases, the customer is asked to resend a voice note.",
+        "height": 224,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        304,
+        336
+      ],
+      "typeVersion": 1,
+      "id": "51b69efd-fd37-4eda-823d-6dc940051ccb",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "download": true
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        160
+      ],
+      "id": "f3a64d0e-1957-48d2-99cf-3dfd6e4bbe42",
+      "name": "Telegram Trigger - Voice Note",
+      "webhookId": "6319b77b-25a3-4408-b95d-c55b743517cf",
+      "credentials": {
+        "telegramApi": {
+          "id": "5iMMUlKrv4ON9bBm",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        160
+      ],
+      "id": "77686f2f-925b-4be2-9c12-311c96489ba1",
+      "name": "Download Audio (binary)",
+      "webhookId": "3515eed5-69a1-46c6-a899-5dd874139c61",
+      "alwaysOutputData": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "5iMMUlKrv4ON9bBm",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {
+          "language": "en"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        432,
+        16
+      ],
+      "id": "108b5902-7a8d-41b7-a04b-b8f96fab7988",
+      "name": "Whisper - Transcribe",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0c66a080-7cfe-462b-a471-94181541507c",
+              "leftValue": "={{ ($json.text || '').trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        64
+      ],
+      "id": "8b365286-0850-46d6-8b50-4be13e2fc81c",
+      "name": "IF - Valid Transcription"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger - Voice Note').item.json.message.chat.id }}",
+        "text": "Sorry, I couldn’t process your message. Please send me a voice note and I’ll be happy to help!",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        240
+      ],
+      "id": "2d460b35-85cf-489c-a749-34313979133e",
+      "name": "Fallback - Request Resend",
+      "webhookId": "d6dea8ac-fa36-430d-a8ee-fcde62503332",
+      "credentials": {
+        "telegramApi": {
+          "id": "5iMMUlKrv4ON9bBm",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "You are the voice assistant for Chías, a coffee shop. Always respond in English, with a friendly, warm, and welcoming tone, like a great barista.\n\nMandatory voice rules:\n1. Your response must be 200 characters maximum in total, including spaces. If the topic is long, summarize the essentials and offer to expand.\n2. Write plain text only, in one or two sentences. Do not use links or URLs, bullet points, dashes, lists, emojis, asterisks, markdown, or special symbols, because your response is converted to audio and would be read literally.\n3. Say prices and hours the way they are spoken, for example three thousand five hundred pesos or from eight a.m. to eight p.m.\n4. If you need to share a website or an email address, say that we will send it by written message.\n5. If you do not understand the request, politely ask the customer to repeat it.\n6. Do not ask for or repeat sensitive personal information.\nCoffee shop information:\n- Opening hours: Monday to Friday from eight a.m. to eight p.m., Saturdays and Sundays from nine a.m. to two p.m.\n- Address: we will send it by written message.\n- Menu: espresso, latte, cappuccino, cold brew, croissants, cheesecake and avocado toast.\n- Prices: coffees from three thousand pesos, pastries from two thousand five hundred pesos.\n- Payment: cash, card and bank transfer.\nIf a customer asks something that is not in this information, say you will check and get back to them. Never make up information."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        896,
+        0
+      ],
+      "id": "9e494d5e-1196-4547-96bc-743ca2b268ff",
+      "name": "AI Agent - Chías Assistant"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger - Voice Note').item.json.message.chat.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        1008,
+        352
+      ],
+      "id": "ea46a560-0f98-40f6-97af-8442f17ecdcb",
+      "name": "Memory (text only, RAM)"
+    },
+    {
+      "parameters": {
+        "resource": "speech",
+        "voice": {
+          "__rl": true,
+          "value": "hpp4J3VqNfWAUOO0d1Us",
+          "mode": "list",
+          "cachedResultName": "Bella - Professional, Bright, Warm"
+        },
+        "text": "={{ $json.output.slice(0, 200) }}",
+        "additionalOptions": {
+          "model": {
+            "mode": "list",
+            "value": "eleven_multilingual_v2"
+          },
+          "outputFormat": "mp3_44100_128",
+          "voiceSettings": "{\n  \"stability\": 0.45,\n  \"similarity_boost\": 0.75,\n  \"style\": 0,\n  \"use_speaker_boost\": true,\n  \"speed\": 1\n}"
+        },
+        "requestOptions": {}
+      },
+      "type": "@elevenlabs/n8n-nodes-elevenlabs.elevenLabs",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "c4acd0f5-aa65-41b5-b3da-9755001aaf90",
+      "name": "ElevenLabs - Voice",
+      "credentials": {
+        "elevenLabsApi": {
+          "id": "vt96wv9U81jRpxCY",
+          "name": "ElevenLabs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAudio",
+        "chatId": "={{ $('Telegram Trigger - Voice Note').item.json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1456,
+        0
+      ],
+      "id": "9027280c-1c7e-4fae-ad1f-3d397db03dc1",
+      "name": "Telegram - Send Audio",
+      "webhookId": "131c1e01-271c-4ca2-a50e-260e3e9dd014",
+      "credentials": {
+        "telegramApi": {
+          "id": "5iMMUlKrv4ON9bBm",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Chías Assistant",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger - Voice Note": {
+      "main": [
+        [
+          {
+            "node": "Download Audio (binary)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Audio (binary)": {
+      "main": [
+        [
+          {
+            "node": "Whisper - Transcribe",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback - Request Resend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Whisper - Transcribe": {
+      "main": [
+        [
+          {
+            "node": "IF - Valid Transcription",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback - Request Resend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Valid Transcription": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Chías Assistant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback - Request Resend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Chías Assistant": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs - Voice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory (text only, RAM)": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent - Chías Assistant",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs - Voice": {
+      "main": [
+        [
+          {
+            "node": "Telegram - Send Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveExecutionProgress": false,
+    "saveManualExecutions": false,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "399a83be-81f7-4df5-b4c6-9e596cac17be",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a57817ef576085de2ee3673fe3a373974e8d7287b1f8e6c9868998c1faf975c1"
+  },
+  "nodeGroups": [],
+  "id": "B4t3HZt5ehxUIjEe",
+  "tags": []
+}
