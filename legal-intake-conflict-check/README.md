@@ -8,7 +8,9 @@ An n8n automation that handles client intake for a US law firm: it checks every 
 
 ## 🎬 Demo
 
-VIDEO_PLACEHOLDER
+▶️ **[Watch the 80-second demo video](https://drive.google.com/file/d/16UXOZPqs8lhkZvxgFVUoFOBJSSiZO0tp/view?usp=sharing)**
+
+The demo shows two cases: a **CONFLICT** that the attorney declines, and a **CLEAR** case that ends with the client booking a consultation.
 
 ---
 
@@ -115,6 +117,8 @@ The `workflows` folder contains:
 
 - `legal-intake-conflict-check.json`: the main workflow
 - `legal-intake-error-handler.json`: the error handling workflow
+
+Before importing, connect your own credentials and replace `YOUR_GOOGLE_SHEET_ID`, `YOUR-SCHEDULING-LINK` and the example email addresses.
 
 ---
 
