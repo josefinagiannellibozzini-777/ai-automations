@@ -1,0 +1,882 @@
+{
+  "name": "Legal Intake & Conflict Check",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cc0c730b-bd2c-4120-9fd7-50321c2b823f",
+              "name": "submission_id",
+              "value": "={{ $json.body.data.submissionId }}",
+              "type": "string"
+            },
+            {
+              "id": "f25657a9-8948-4a85-98da-60d9280d3657",
+              "name": "submitted_at",
+              "value": "={{ $json.body.createdAt }}",
+              "type": "string"
+            },
+            {
+              "id": "5337b84e-f554-4800-82aa-17460734b295",
+              "name": "full_name",
+              "value": "={{ $json.body.data.fields[0].value }}",
+              "type": "string"
+            },
+            {
+              "id": "93232a36-07f7-4579-86b2-29ee21ed2c51",
+              "name": "email",
+              "value": "={{ $json.body.data.fields[1].value }}",
+              "type": "string"
+            },
+            {
+              "id": "635a7714-4d05-4e36-ad96-b1aa0038b5d7",
+              "name": "phone",
+              "value": "={{ $json.body.data.fields[2].value }}",
+              "type": "string"
+            },
+            {
+              "id": "9b13c852-3ac5-46cb-93d5-b0d8898b7edc",
+              "name": "practice_area",
+              "value": "={{ $json.body.data.fields[3].options.find(o => o.id === $json.body.data.fields[3].value[0]).text }}",
+              "type": "string"
+            },
+            {
+              "id": "62669b17-e1d4-4ba9-9e3b-585439f0125e",
+              "name": "opposing_party",
+              "value": "={{ $json.body.data.fields[4].value || 'No opposing party' }}",
+              "type": "string"
+            },
+            {
+              "id": "9ee47298-3198-4f5b-b94e-6951fd64134a",
+              "name": "description",
+              "value": "={{ $json.body.data.fields[5].value }}",
+              "type": "string"
+            },
+            {
+              "id": "8a5667eb-cb90-4b58-94e3-6ba82afeec70",
+              "name": "incident_date",
+              "value": "={{ $json.body.data.fields[6].value || 'Not provided' }}",
+              "type": "string"
+            },
+            {
+              "id": "8957677a-ca28-43e8-ab5d-4fa0100e036f",
+              "name": "upcoming_deadline",
+              "value": "={{ $json.body.data.fields[7].value ? $json.body.data.fields[7].options.find(o => o.id === $json.body.data.fields[7].value[0]).text : 'Not provided' }}",
+              "type": "string"
+            },
+            {
+              "id": "707be579-0308-4c70-9ec9-cd325147ed9b",
+              "name": "consent",
+              "value": "={{ $json.body.data.fields[9].value === true }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        144,
+        0
+      ],
+      "id": "c7d5ea13-ea0c-4a04-ad3f-5884ad9849c1",
+      "name": "Normalize Intake Data"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "legal-intake",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        -80,
+        0
+      ],
+      "id": "e219f300-89d0-4caf-a0ae-846ce8294a06",
+      "name": "New Intake (Tally)"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Law Firm - Client Database (Demo)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1400262903,
+          "mode": "list",
+          "cachedResultName": "Clients",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=1400262903"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        368,
+        0
+      ],
+      "id": "5309a66c-e278-41b1-bda5-4fe2ff194a4b",
+      "name": "Get Client Database"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "clients",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        592,
+        0
+      ],
+      "id": "edd7c91d-969a-46e4-920a-769cd2e3446e",
+      "name": "Combine Clients"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a conflict-of-interest checker for a US law firm.\n\nPROSPECTIVE CLIENT\n- Name: {{ $('Normalize Intake Data').first().json.full_name }}\n- Opposing party: {{ $('Normalize Intake Data').first().json.opposing_party }}\n\nFIRM CLIENT DATABASE (JSON)\n{{ JSON.stringify($json.clients) }}\n\nRULES\n1. CONFLICT: the opposing party is the same person or company as any \"client_name\" in the database (active or closed).\n2. CONFLICT: the prospective client's name is the same as any \"opposing_party\" in the database.\n3. RELATED MATTER: no conflict, but the opposing party is the same as an \"opposing_party\" in the database (the firm already represents someone against that party).\n4. CLEAR: none of the above.\n\nIf the opposing party is \"No opposing party\", only check rule 2.\nTreat names as the same if they only differ in capitalization, punctuation or suffixes like LLC, Inc, Co, Corp, Group.\nDo not guess: people who only share a last name are NOT a match.\n\nReturn the matched client_id values and a one-sentence reason written for an attorney.",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        816,
+        0
+      ],
+      "id": "08aa0713-6d9f-4a3a-83d1-8d2d3e8911d8",
+      "name": "Conflict Check (AI)",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a legal intake assistant for a US law firm. Your job is to prepare a short case evaluation for an attorney. You never give legal advice and never promise outcomes.\n\nFIRM PRACTICE AREAS: Personal Injury, Family Law, Employment Law, Business Law, Real Estate, Estate Planning.\n\nINTAKE SUBMISSION\n- Name: {{ $('Normalize Intake Data').first().json.full_name }}\n- Practice area selected: {{ $('Normalize Intake Data').first().json.practice_area }}\n- Opposing party: {{ $('Normalize Intake Data').first().json.opposing_party }}\n- What happened: {{ $('Normalize Intake Data').first().json.description }}\n- Date of incident: {{ $('Normalize Intake Data').first().json.incident_date }}\n- Upcoming court date or deadline: {{ $('Normalize Intake Data').first().json.upcoming_deadline }}\n\nCONFLICT CHECK RESULT\n- Status: {{ $json.output.conflict_status }}\n- Details: {{ $json.output.conflict_reason }}\n\nINSTRUCTIONS\n1. case_summary: 2-3 sentences, neutral and factual, written for an attorney.\n2. key_facts: the most relevant facts as a short list (parties, amounts, injuries, dates).\n3. urgency:\n   - \"High\" if there is an upcoming court date or deadline, or the facts suggest a time-sensitive matter (recent injury, eviction, custody emergency).\n   - \"Medium\" if the deadline answer is \"Not sure\".\n   - \"Low\" otherwise.\n4. case_quality:\n   - \"Qualified\": the issue fits a firm practice area, the opposing party is identifiable and there is clear harm or damages.\n   - \"Needs Review\": facts are unclear, incomplete, or the selected practice area does not match the description.\n   - \"Not a Fit\": the issue is outside the firm's practice areas or there is no apparent legal issue.\n5. recommended_next_step: one sentence for the attorney. If the conflict status is \"CONFLICT\", it must be: \"Do not proceed until the conflict is reviewed by the responsible attorney.\"",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1168,
+        0
+      ],
+      "id": "3374d952-da5c-4f89-a39a-1c93eb57b160",
+      "name": "Case Evaluation (AI)",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0,
+          "safetySettings": {
+            "values": []
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        832,
+        240
+      ],
+      "id": "ca93172c-429f-4159-b110-eb848718dd65",
+      "name": "Gemini – Conflict Check"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"conflict_status\": \"CONFLICT\",\n  \"matched_client_ids\": [\"C-1003\"],\n  \"conflict_reason\": \"The opposing party Brightline Dental Group is an active client of the firm (Sarah Mitchell).\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        960,
+        240
+      ],
+      "id": "a820f2fd-0e70-4913-8f51-13ffdec2a014",
+      "name": "Conflict Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1184,
+        240
+      ],
+      "id": "feb5fbf6-ebde-4aeb-bb74-9ed73c82e995",
+      "name": "Gemini – Case Evaluation"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"case_summary\": \"The prospective client owns a cleaning company that provided services to Brightline Dental Group. Three invoices remain unpaid.\",\n  \"key_facts\": [\"Unpaid invoices totaling $8,500\", \"Service relationship of 8 months\", \"Opposing party: Brightline Dental Group\"],\n  \"urgency\": \"Low\",\n  \"urgency_reason\": \"No upcoming court date or deadline was reported.\",\n  \"case_quality\": \"Qualified\",\n  \"quality_reason\": \"Business Law matter with an identifiable opposing party and clear damages.\",\n  \"recommended_next_step\": \"Do not proceed until the conflict is reviewed by the responsible attorney.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1312,
+        240
+      ],
+      "id": "c525b01f-7237-44c8-b867-47eb0a292fba",
+      "name": "Evaluation Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "attorney@example.com",
+        "subject": "=[{{ $('Conflict Check (AI)').first().json.output.conflict_status }}] \nNew Intake: {{ $('Normalize Intake Data').first().json.full_name }} – {{ $('Normalize Intake Data').first().json.practice_area }}",
+        "message": "=<h2>New Client Intake – Attorney Review Required</h2>\n\n<h3>Prospective Client</h3>\n<p><b>Name:</b> {{ $('Normalize Intake Data').first().json.full_name }}</p>\n<p><b>Email:</b> {{ $('Normalize Intake Data').first().json.email }}</p>\n<p><b>Phone:</b> {{ $('Normalize Intake Data').first().json.phone }}</p>\n<p><b>Practice area:</b> {{ $('Normalize Intake Data').first().json.practice_area }}</p>\n<p><b>Opposing party:</b> {{ $('Normalize Intake Data').first().json.opposing_party }}</p>\n\n<h3>Conflict Check: {{ $('Conflict Check (AI)').first().json.output.conflict_status }}</h3>\n<p>{{ $('Conflict Check (AI)').first().json.output.conflict_reason }}</p>\n\n<h3>Case Evaluation</h3>\n<p><b>Quality:</b> {{ $json.output.case_quality }} – {{ $json.output.quality_reason }}</p>\n<p><b>Urgency:</b> {{ $json.output.urgency }} – {{ $json.output.urgency_reason }}</p>\n<p><b>Summary:</b> {{ $json.output.case_summary }}</p>\n\n<p><b>Key facts:</b></p>\n<ul>\n<li>{{ $json.output.key_facts.join('</li><li>') }}</li>\n</ul>\n\n<p><b>Recommended next step:</b> {{ $json.output.recommended_next_step }}</p>\n\n<h3>Client's Original Description</h3>\n<p><i>{{ $('Normalize Intake Data').first().json.description }}</i></p>",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Accept Case",
+            "disapproveLabel": "Decline Case"
+          }
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1520,
+        0
+      ],
+      "id": "fe15c09d-4f61-40b7-aa3a-9a3e448962a8",
+      "name": "Attorney Approval"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "09b4cfe5-f00c-4a85-8502-adf75111e826",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1744,
+        0
+      ],
+      "id": "dc655f44-7d07-41d4-8886-64bdc27d5055",
+      "name": "Case Accepted?"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Normalize Intake Data').item.json.email }}",
+        "subject": "Your Case Evaluation Request – Mitchell & Chen Law Group",
+        "message": "=<p>Dear {{ $('Normalize Intake Data').first().json.full_name }},</p>  <p>Thank you for contacting Mitchell & Chen Law Group and for taking the time to share the details of your situation.</p>  <p>After reviewing your request, we regret to inform you that our firm is unable to represent you in this matter. This decision is not an opinion on the merits of your case.</p>  <p>Please be aware that legal claims are subject to strict deadlines, known as statutes of limitations. We strongly encourage you to consult with another attorney as soon as possible to protect your rights. If you need a referral, your local or state bar association can help you find a qualified lawyer.</p>  <p>We wish you the best in resolving this matter.</p>  <p>Sincerely,<br> Client Intake Team<br> Mitchell & Chen Law Group</p>  <p style=\"font-size:12px;color:#777;\">This message does not create an attorney-client relationship and does not constitute legal advice.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2192,
+        96
+      ],
+      "id": "7224b15e-41f7-41be-b5fd-07088a8adbc4",
+      "name": "Send Decline Email",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "email": "={{ $('Normalize Intake Data').item.json.email }}",
+        "additionalFields": {
+          "firstName": "={{ $('Normalize Intake Data').item.json.full_name.split(' ')[0] }}",
+          "lastName": "={{ $('Normalize Intake Data').item.json.full_name.split(' ').slice(1).join(' ') }}",
+          "leadStatus": "IN_PROGRESS",
+          "lifeCycleStage": "opportunity",
+          "phoneNumber": "={{ $('Normalize Intake Data').item.json.phone }}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1968,
+        -96
+      ],
+      "id": "e902c47a-bb3e-4ab2-88c3-422921244f69",
+      "name": "Create HubSpot Contact",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Normalize Intake Data').first().json.email }}",
+        "subject": "Next Step: Schedule Your Consultation – Mitchell & Chen Law Group",
+        "message": "=<p>Dear {{ $('Normalize Intake Data').first().json.full_name }},</p>  <p>Thank you for contacting Mitchell & Chen Law Group. An attorney has reviewed the information you submitted about your {{ $('Normalize Intake Data').first().json.practice_area }} matter, and we would like to meet with you for an initial consultation.</p>  <p>Please choose a time that works for you using the link below:</p>  <p style=\"text-align:center;margin:28px 0;\">   <a href=\"https://meetings.hubspot.com/YOUR-SCHEDULING-LINK\" style=\"background-color:#1a3c5e;color:#ffffff;padding:14px 28px;text-decoration:none;border-radius:6px;font-weight:bold;\">Schedule My Consultation</a> </p>  <p><b>To make the most of your consultation, please have ready:</b></p> <ul>   <li>Any documents related to your situation (letters, contracts, photos, medical records or invoices)</li>   <li>Names and contact information of anyone involved</li>   <li>A timeline of what happened</li> </ul>  <p>If you have any questions before your appointment, simply reply to this email.</p>  <p>Sincerely,<br> Client Intake Team<br> Mitchell & Chen Law Group</p>  <p style=\"font-size:12px;color:#777;\">This message does not create an attorney-client relationship. An attorney-client relationship is only established once a written engagement agreement has been signed.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2192,
+        -96
+      ],
+      "id": "9312c9e9-3488-4cef-bbae-3ec657b488d4",
+      "name": "Send Consultation Invite",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Law Firm - Client Database (Demo)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1382018533,
+          "mode": "list",
+          "cachedResultName": "Intake Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=1382018533"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "submission_id": "={{ $('Normalize Intake Data').item.json.submission_id }}",
+            "submitted_at": "={{ $('Normalize Intake Data').item.json.submitted_at }}",
+            "full_name": "={{ $('Normalize Intake Data').item.json.full_name }}",
+            "email": "={{ $('Normalize Intake Data').item.json.email }}",
+            "phone": "={{ $('Normalize Intake Data').item.json.phone }}",
+            "practice_area": "={{ $('Normalize Intake Data').item.json.practice_area }}",
+            "opposing_party": "={{ $('Normalize Intake Data').item.json.opposing_party }}",
+            "conflict_status": "={{ $('Conflict Check (AI)').first().json.output.conflict_status }}",
+            "conflict_reason": "={{ $('Conflict Check (AI)').first().json.output.conflict_reason }}",
+            "case_quality": "={{ $('Case Evaluation (AI)').first().json.output.case_quality }}",
+            "urgency": "={{ $('Case Evaluation (AI)').item.json.output.urgency }}",
+            "case_summary": "={{ $('Case Evaluation (AI)').first().json.output.case_summary }}",
+            "attorney_decision": "={{ $('Attorney Approval').first().json.data.approved ? 'Accepted' : 'Declined' }}",
+            "decided_at": "={{ $('Attorney Approval').first().json.data.respondedAt }}"
+          },
+          "matchingColumns": [
+            "submission_id"
+          ],
+          "schema": [
+            {
+              "id": "submission_id",
+              "displayName": "submission_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "submitted_at",
+              "displayName": "submitted_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "practice_area",
+              "displayName": "practice_area",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "opposing_party",
+              "displayName": "opposing_party",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "conflict_status",
+              "displayName": "conflict_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "conflict_reason",
+              "displayName": "conflict_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "case_quality",
+              "displayName": "case_quality",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urgency",
+              "displayName": "urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "case_summary",
+              "displayName": "case_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "attorney_decision",
+              "displayName": "attorney_decision",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "decided_at",
+              "displayName": "decided_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2416,
+        0
+      ],
+      "id": "c4649d2f-c7f9-4c41-ab68-84333d2b9437",
+      "name": "Log Intake"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "email": "={{ $('Normalize Intake Data').item.json.email }}",
+        "additionalFields": {
+          "firstName": "={{ $('Normalize Intake Data').item.json.full_name.split(' ')[0] }}",
+          "lastName": "={{ $('Normalize Intake Data').item.json.full_name.split(' ').slice(1).join(' ') }}",
+          "leadStatus": "UNQUALIFIED",
+          "lifeCycleStage": "lead",
+          "phoneNumber": "={{ $('Normalize Intake Data').item.json.phone }}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1968,
+        96
+      ],
+      "id": "b1f9ff93-4fd6-4506-947e-c0649f794614",
+      "name": "Create HubSpot Contact (Declined)",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "content": "## ⚖️ AI Legal Intake & Conflict Check\n**Mitchell & Chen Law Group (fictional demo)**\n\nAutomates client intake for a US law firm:\n1. A prospective client submits a Tally form\n2. AI checks the firm's client database for conflicts of interest\n3. AI evaluates the case (summary, urgency, quality)\n4. An attorney approves or declines from their inbox (human-in-the-loop)\n5. The client receives a consultation invite or a non-engagement letter\n6. Every lead is logged in HubSpot and Google Sheets\n\n**Stack:** n8n · Tally · Google Sheets · Gemini · Gmail · HubSpot",
+        "height": 528,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -336,
+        -288
+      ],
+      "typeVersion": 1,
+      "id": "1a3a1505-2415-4275-b5ad-9926a257cdf0",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### 1. Intake\nTally sends each submission via webhook. Edit Fields maps the raw form answers (including dropdown option IDs) into clean, readable fields.",
+        "height": 336
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        80,
+        -208
+      ],
+      "typeVersion": 1,
+      "id": "6649dad2-8f0f-427a-aa78-7b5eb55d174d",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "### 2. Conflict Check\nAll firm clients are loaded from Google Sheets (simulating a case management system like Clio) and combined into a single list. Gemini (temperature 0) returns CONFLICT, RELATED MATTER or CLEAR, enforced by a structured output parser.",
+        "height": 400
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        528,
+        -240
+      ],
+      "typeVersion": 1,
+      "id": "d229e1ce-b3f3-4605-98e2-d99c5247a599",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "### 3. AI Case Evaluation\nWorks like a paralegal: case summary, key facts, urgency (High / Medium / Low) and case quality. Never gives legal advice or promises outcomes.",
+        "height": 320,
+        "width": 248
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1152,
+        -160
+      ],
+      "typeVersion": 1,
+      "id": "a81dcf32-8689-42f5-b368-5cd95c6c2347",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "### 4. Attorney Review (HITL)\nThe attorney receives a full brief by email and decides with one click. The workflow pauses until they respond. No client is accepted or declined without human approval.",
+        "height": 336
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1536,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "59eb4c0e-9faf-4135-9701-8ba81d59dd9a",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "### 5a. Accepted\nContact created in HubSpot (Lead Status: In Progress). The client receives a link to book an initial consultation.",
+        "height": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1984,
+        -240
+      ],
+      "typeVersion": 1,
+      "id": "da3b3881-984f-4c56-b7d0-b4df393b1829",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "### 5b. Declined\nContact saved in HubSpot as Unqualified. The client receives a non-engagement letter that does not reveal the conflict (client confidentiality) and recommends consulting another attorney promptly due to statutes of limitations.",
+        "height": 208
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2032,
+        256
+      ],
+      "typeVersion": 1,
+      "id": "7cdf4cbc-c45e-40dd-8690-5cffc7c5e35b",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "### 6. Audit Log\nEvery intake is recorded in Google Sheets with the AI results and the attorney's decision.",
+        "height": 336
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2352,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "4888570b-e885-4e98-b4b0-f5504799f289",
+      "name": "Sticky Note7"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Normalize Intake Data": {
+      "main": [
+        [
+          {
+            "node": "Get Client Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Intake (Tally)": {
+      "main": [
+        [
+          {
+            "node": "Normalize Intake Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Client Database": {
+      "main": [
+        [
+          {
+            "node": "Combine Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Clients": {
+      "main": [
+        [
+          {
+            "node": "Conflict Check (AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conflict Check (AI)": {
+      "main": [
+        [
+          {
+            "node": "Case Evaluation (AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini – Conflict Check": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Conflict Check (AI)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conflict Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Conflict Check (AI)",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini – Case Evaluation": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Case Evaluation (AI)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluation Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Case Evaluation (AI)",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Case Evaluation (AI)": {
+      "main": [
+        [
+          {
+            "node": "Attorney Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attorney Approval": {
+      "main": [
+        [
+          {
+            "node": "Case Accepted?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Case Accepted?": {
+      "main": [
+        [
+          {
+            "node": "Create HubSpot Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create HubSpot Contact (Declined)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create HubSpot Contact": {
+      "main": [
+        [
+          {
+            "node": "Send Consultation Invite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Consultation Invite": {
+      "main": [
+        [
+          {
+            "node": "Log Intake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create HubSpot Contact (Declined)": {
+      "main": [
+        [
+          {
+            "node": "Send Decline Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Decline Email": {
+      "main": [
+        [
+          {
+            "node": "Log Intake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timezone": "America/New_York"
+  },
+  "nodeGroups": [],
+  "tags": []
+}
