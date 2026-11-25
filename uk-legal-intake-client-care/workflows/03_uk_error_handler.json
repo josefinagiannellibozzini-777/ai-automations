@@ -1,0 +1,208 @@
+{
+  "name": "UK Legal – Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "25d1345a-5919-4822-b7dd-8f9e1256f11c",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        64,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Turns the raw n8n error into clean fields\nconst e = $json.execution || {};\nconst w = $json.workflow || {};\nconst trigger = $json.trigger || {};\nreturn [{ json: {\n  timestamp: $now.setZone('Europe/London').toFormat('yyyy-MM-dd HH:mm:ss'),\n  workflow: w.name || 'Unknown workflow',\n  failed_node: e.lastNodeExecuted || trigger?.error?.node?.name || 'Trigger',\n  error_message: (e.error?.message || trigger?.error?.message || 'Unknown error').slice(0, 500),\n  execution_id: e.id || 'n/a',\n  execution_url: e.url || ''\n} }];"
+      },
+      "id": "3c1cb70f-0c78-4c07-930e-7e07714010b9",
+      "name": "Format Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "solicitor@example.com",
+        "subject": "=⚠️ Workflow failed: {{ $json.workflow }}",
+        "message": "=<h3>An automation failed and needs attention</h3><p><b>Workflow:</b> {{ $json.workflow }}<br><b>Failed node:</b> {{ $json.failed_node }}<br><b>Time (UK):</b> {{ $json.timestamp }}<br><b>Error:</b> {{ $json.error_message }}</p><p><a href=\"{{ $json.execution_url }}\">Open the failed execution in n8n</a></p><p style=\"color:#777;font-size:12px\">The client was not affected by a partial action if the failure happened before an email was sent. Please review the execution and retry it.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "858576f0-4170-4770-9460-d0187ea2eb80",
+      "name": "Alert Team (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        528,
+        240
+      ],
+      "webhookId": "c6def6c8-dfbd-4394-ae53-0ad900ef3c26",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Error Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $('Format Error').item.json.timestamp }}",
+            "workflow": "={{ $('Format Error').item.json.workflow }}",
+            "failed_node": "={{ $('Format Error').item.json.failed_node }}",
+            "error_message": "={{ $('Format Error').item.json.error_message }}",
+            "execution_id": "={{ $('Format Error').item.json.execution_id }}",
+            "execution_url": "={{ $('Format Error').item.json.execution_url }}",
+            "status": "Open"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "workflow",
+              "displayName": "workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "failed_node",
+              "displayName": "failed_node",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "execution_url",
+              "displayName": "execution_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "564d797e-0905-44c3-869d-3b9e1f1d7aac",
+      "name": "Log Error (Sheets)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        528,
+        448
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "content": "## ⚠️ Error Handler (shared)\nUsed by **UK Legal Intake** and **UK Client Care Letter**.\n\nIf any node fails (after its automatic retries):\n1. The team gets an email with the workflow, the failed node, the error and a link to the execution\n2. The error is logged in Google Sheets (Error Log tab) as **Open** until someone reviews it\n\nSet it in each workflow: Settings → Error Workflow.",
+        "height": 300,
+        "width": 380,
+        "color": 3
+      },
+      "id": "98e293f3-b4d8-4aab-8e95-5bc27ca19482",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error": {
+      "main": [
+        [
+          {
+            "node": "Alert Team (Gmail)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Error (Sheets)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "nodeGroups": [],
+  "tags": []
+}
