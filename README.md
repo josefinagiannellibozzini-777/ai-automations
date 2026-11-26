@@ -1,39 +1,69 @@
-# 🤖 AI Automations Portfolio
+# AI Automation Portfolio
 
-Hi! I'm **Josefina Giannelli Bozzini**, an AI Automation Specialist based in Argentina, with a background in legal and customer operations.
+**Josefina Giannelli Bozzini** · AI Automation Specialist · Argentina
 
-I design and build AI-powered workflows that automate real business processes: chatbots, voice assistants, RAG agents, document processing, legal intake, and human-in-the-loop approvals, built with **n8n** and integrated with tools like WhatsApp, Telegram, Gmail, Google Sheets, Google Drive, HubSpot, Tally, Pinecone, OpenAI, Google Gemini, and ElevenLabs.
+I build AI-powered workflows with **n8n** that connect real business tools: Gmail, Google Sheets, Google Drive, HubSpot, Tally, Airtable, WhatsApp and Telegram, with Google Gemini, OpenAI, Pinecone and ElevenLabs.
 
-Each project lives in its own folder with an exported n8n workflow, screenshots, and a README explaining how it works.
+My background is in **legal administration and customer service**, so I design automations around how a business actually works: clear steps, a human approving what matters, and no lost data when something fails.
 
-## 📂 Projects
+Each project folder includes the exported **n8n workflows**, **screenshots** and its own **README**.
 
-| Project | What it does | Tech |
-| --- | --- | --- |
-| [⚖️ AI Legal Intake & Conflict Check](legal-intake-conflict-check/) | Client intake for a US law firm: AI checks for conflicts of interest and prepares a case brief, the attorney accepts or declines with one click, and every lead is saved in a CRM. | n8n · Google Gemini · Tally · Gmail · HubSpot · Google Sheets |
-| [🎾 AI Padel Booking Assistant](padel-booking-assistant/) | WhatsApp AI agent that checks court availability and books time slots in natural language. | n8n · Google Gemini · WhatsApp Cloud API · Google Sheets |
-| [💬 NovaTech Support Bot](novatech-support-bot/) | Telegram support agent that answers questions using RAG over a company knowledge base indexed from Google Drive. | n8n · AI Agent · Pinecone · Telegram · Google Drive |
-| [🧾 Invoice Processor](invoice-processor/) | Extracts data from supplier invoices received by email and loads it into a spreadsheet. | n8n · AI · Gmail · Google Sheets |
-| [🏠 Real Estate Lead Management](real-estate-lead-management/) | Processes real estate leads from a Tally form using sub-workflows, error handling, and human approval. | n8n · Tally · Sub-workflows · Human-in-the-loop |
-| [🎙️ Voice AI Assistant](voice-ai-assistant/) | Voice-to-voice customer assistant for a coffee shop: customers send a voice note on Telegram and get a natural voice reply, with no audio ever stored. | n8n · Whisper · GPT-4o-mini · ElevenLabs · Telegram |
+---
 
-## 🛠️ Skills Demonstrated
+## Projects
 
-- **AI agents with tools:** agents that decide which action to take and read or update external systems.
-- **RAG (Retrieval-Augmented Generation):** answering questions from a custom knowledge base with a vector database.
-- **Voice AI:** speech-to-text, voice-optimized AI responses, and text-to-speech in a single conversational flow.
-- **Document processing:** turning unstructured documents into structured data.
-- **Structured AI outputs:** output parsers and temperature 0 so the AI answers the same way every time.
-- **Human-in-the-loop:** approval steps before critical actions.
-- **CRM integration:** creating and updating leads in HubSpot with their status.
-- **Workflow architecture:** sub-workflows, error handling, fallback routes, and reusable logic.
-- **Reliability:** automatic retries, error workflows with alerts, and logs that never create duplicates.
-- **Privacy by design:** minimal data retention, client confidentiality, and least-privilege API credentials.
-- **Messaging integrations:** WhatsApp and Telegram bots.
+### ⚖️ [UK Legal Intake, Conflict Check & Client Care Letter](uk-legal-intake-client-care) · *New*
+End-to-end system for a law firm in England & Wales, from first enquiry to engagement letter, built as three connected workflows.
+- AI checks each enquiry for **conflicts of interest** against the firm's client database and prepares a case brief.
+- The solicitor **accepts or declines with one click**, and the contact is saved in **HubSpot CRM**.
+- After the consultation, AI drafts the **Client Care Letter**. Fees, complaints and SRA wording come from fixed templates, and the solicitor approves it before it is sent.
+- Data validation, retries, no-duplicate audit logs and a shared **error workflow** with email alerts.
 
-## 📫 Contact
+`n8n` `Google Gemini` `Tally` `Gmail` `HubSpot` `Google Sheets` · 🎥 [Demo video](https://drive.google.com/file/d/1ryQE05HFwn3VLweZoAONkBYVY3zTIoVx/view?usp=sharing)
 
-- **LinkedIn:** [Josefina Giannelli Bozzini](https://www.linkedin.com/in/josefina-giannelli-bozzini)
-- **Email:** josefina.giannellibozzini@gmail.com
+### 🎙️ [Voice AI Assistant](voice-ai-assistant)
+Voice-to-voice customer assistant for a coffee shop on Telegram: transcribes voice notes, answers with a natural voice and keeps per-customer memory. Built with privacy by design: no audio is stored.
 
-Open to remote opportunities in AI automation and workflow automation.
+`n8n` `Whisper` `GPT-4o-mini` `ElevenLabs` `Telegram`
+
+### 💬 [NovaTech Support Bot](novatech-support-bot)
+Telegram support agent that answers questions with **RAG** over a company knowledge base indexed from Google Drive.
+
+`n8n` `AI Agent` `Pinecone` `Google Drive` `Telegram`
+
+### 🎾 [AI Padel Booking Assistant](padel-booking-assistant)
+WhatsApp AI agent that checks court availability and books or cancels slots in natural language.
+
+`n8n` `Google Gemini` `WhatsApp Cloud API` `Google Sheets`
+
+### 🧾 [Invoice Processor](invoice-processor)
+Extracts data from supplier invoices received by email, validates required fields, totals and duplicates, and saves valid invoices to a spreadsheet. Invalid ones go to review with an email alert.
+
+`n8n` `AI` `Gmail` `Google Sheets`
+
+### 🏠 [Real Estate Lead Management](real-estate-lead-management)
+Four connected workflows that process leads from a Tally form, manage property and lead data in Airtable, and include an error handler and human approval before key actions.
+
+`n8n` `Tally` `Airtable` `Sub-workflows` `Human-in-the-loop`
+
+---
+
+## What these projects show
+
+- **AI agents** with tools, memory and structured outputs
+- **RAG** with vector databases
+- **Voice AI** (speech-to-text and text-to-speech)
+- **Document processing** and data validation
+- **CRM automation** with HubSpot
+- **Human-in-the-loop** approvals for decisions that matter
+- **Reliable workflow design:** sub-workflows, retries, error handlers and audit logs
+- **Privacy by design:** least-privilege credentials and no unnecessary data storage
+
+---
+
+## Contact
+
+- LinkedIn: [linkedin.com/in/josefina-giannelli-bozzini](https://www.linkedin.com/in/josefina-giannelli-bozzini)
+- Email: josefina.giannellibozzini@gmail.com
+
+*All projects are built on simulated business scenarios with test data.*
